@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<title>Site Mapping Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#FAF8F4;
+    --surface:#FFFFFF;
+    --ink:#283848;
+    --ink-soft:#647082;
+    --line:#E8E2D8;
+    --accent:#E8821A;
+    --accent-dark:#C1431F;
+    --accent-soft:#FBEBDA;
+    --warn:#C1272D;
+    --warn-soft:#FBEAE8;
+    --ok:#2E7D32;
+    --navy:#283848;
+    --gold:#F2A41E;
+    --red:#E1402F;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:36px 24px 80px;}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+  .brand-mark{width:40px;height:40px;flex-shrink:0;}
+  .brand-word{line-height:1.15;}
+  .brand-word .b1{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:19px;
+    color:var(--navy);letter-spacing:.01em;
+  }
+  .brand-word .b2{
+    font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-soft);
+    letter-spacing:.28em;text-transform:uppercase;
+  }
+  header.top{margin-bottom:28px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--accent-dark);
+    display:flex;align-items:center;gap:8px;
+    margin-bottom:10px;
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;}
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:28px;
+    font-weight:700;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .sub{color:var(--ink-soft);font-size:14.5px;max-width:620px;line-height:1.55;}
+
+  .title-field{margin:22px 0 26px;}
+  .title-field label{
+    display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);
+    margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;
+  }
+  .title-field input{
+    width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:var(--radius);
+    font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--ink);background:var(--surface);
+  }
+  .title-field input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+  }
+  .db-config{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;margin-bottom:24px;
+  }
+  .db-config-head{
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;color:var(--ink);margin-bottom:10px;
+  }
+  .db-config-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .db-config-row input[type="text"]{flex:2;min-width:240px;}
+  .db-config-row input[type="password"]{flex:1;min-width:120px;}
+  .db-config-row input{
+    padding:9px 12px;border:1px solid var(--line);border-radius:7px;font-size:13px;
+    font-family:'IBM Plex Mono',monospace;background:var(--bg);
+  }
+  .db-config-row button{
+    background:var(--navy);color:#fff;border:none;border-radius:7px;padding:0 16px;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;
+  }
+  .db-config-row button:hover{opacity:.9;}
+  .db-status{font-size:12px;color:var(--ink-soft);margin-top:8px;font-family:'IBM Plex Mono',monospace;}
+  .db-status.ok{color:var(--ok);}
+  .db-status.err{color:var(--warn);}
+
+  .tabnav{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:24px;}
+  .tab-btn{
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;
+    background:none;border:none;padding:10px 4px;margin-right:18px;cursor:pointer;
+    color:var(--ink-soft);border-bottom:2px solid transparent;
+  }
+  .tab-btn.active{color:var(--accent-dark);border-bottom-color:var(--accent);}
+  .tab-badge{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--accent-soft);
+    color:var(--accent-dark);border-radius:10px;padding:1px 7px;margin-left:4px;
+  }
+  .save-note{font-size:12px;color:var(--ink-soft);margin:-10px 0 18px;}
+  #saveDashBtn{background:var(--navy);color:#fff;}
+  #saveDashBtn:hover{opacity:.9;}
+  #saveDashBtn[hidden]{display:none;}
+
+  .dash-toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .dash-toolbar input[type="text"]{
+    flex:1;min-width:220px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;
+    font-size:13.5px;background:var(--surface);
+  }
+  .dash-toolbar select{
+    padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:var(--surface);
+  }
+  .dash-toolbar button{
+    background:var(--surface);border:1px solid var(--line);color:var(--ink);
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:0 16px;border-radius:8px;cursor:pointer;
+  }
+  .dash-toolbar button:hover{border-color:var(--accent);color:var(--accent-dark);}
+  .dash-stats{display:flex;gap:18px;margin-bottom:14px;flex-wrap:wrap;}
+  .dash-stat{
+    background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 16px;
+  }
+  .dash-stat .num{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:19px;color:var(--navy);}
+  .dash-stat .lbl{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;}
+  .card h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:15px;margin:0;font-weight:600;
+    display:flex;align-items:center;gap:8px;
+  }
+  .template-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;
+    background:none;border:1px solid var(--line);color:var(--accent-dark);
+    padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;
+  }
+  .template-btn:hover{background:var(--accent-soft);border-color:var(--accent);}
+  .step-num{
+    width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);
+    font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .card p.hint{color:var(--ink-soft);font-size:13px;margin:0 0 14px;}
+
+  .dropzone{
+    border:1.5px dashed var(--line);border-radius:8px;padding:22px 14px;text-align:center;
+    cursor:pointer;transition:border-color .15s,background .15s;position:relative;
+  }
+  .dropzone:hover{border-color:var(--accent);background:var(--accent-soft);}
+  .dropzone.has-file{border-color:var(--ok);background:#F1F8F1;}
+  .dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .dropzone .dz-label{font-size:13.5px;color:var(--ink-soft);font-weight:500;}
+  .dropzone .dz-file{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink);margin-top:6px;word-break:break-all;}
+
+  .mapping{margin-top:14px;display:none;}
+  .mapping.show{display:block;}
+  .map-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .map-row label{font-size:12.5px;color:var(--ink-soft);width:90px;flex-shrink:0;}
+  .map-row select{
+    flex:1;padding:7px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;
+    background:var(--surface);color:var(--ink);
+  }
+  .map-row select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  .actions{margin:26px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  button{
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;
+    padding:12px 22px;border-radius:8px;border:none;cursor:pointer;
+    transition:transform .08s, box-shadow .15s;
+  }
+  button:active{transform:translateY(1px);}
+  #generateBtn{background:var(--accent);color:#fff;}
+  #generateBtn:hover:not(:disabled){background:var(--accent-dark);}
+  #generateBtn:disabled{background:#C7CCD3;cursor:not-allowed;}
+  #downloadBtn{background:var(--surface);color:var(--accent-dark);border:1px solid var(--accent);}
+  #downloadBtn:hover{background:var(--accent-soft);}
+  #downloadBtn[hidden]{display:none;}
+  .status{font-size:13px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+
+  .error-box{
+    background:var(--warn-soft);border:1px solid #EFC9C4;color:var(--warn);
+    border-radius:8px;padding:12px 14px;font-size:13.5px;margin-top:16px;display:none;
+  }
+  .error-box.show{display:block;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0;}
+  .legend-item{
+    display:flex;align-items:center;gap:7px;font-size:12.5px;background:var(--surface);
+    border:1px solid var(--line);border-radius:20px;padding:5px 12px 5px 8px;
+  }
+  .legend-swatch{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .legend-count{font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);}
+
+  .results-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;margin-top:8px;
+  }
+  .results-title{
+    padding:16px 20px;border-bottom:1px solid var(--line);
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;
+    color:var(--ink);background:#FAFBFC;letter-spacing:.01em;
+  }
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  thead th{
+    background:var(--accent-dark);color:#fff;text-align:left;padding:10px 14px;
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;
+    text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;
+  }
+  tbody td{padding:9px 14px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  tbody tr:hover{background:#FAFBFC;}
+  .cell-regional{color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  .cell-site{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+  .cell-nama{display:flex;align-items:center;gap:8px;}
+  .nama-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .cell-nik,.cell-hp{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);}
+  .unassigned{color:var(--warn);font-style:italic;}
+
+  .table-scroll{max-height:560px;overflow:auto;}
+  .empty-state{padding:40px 20px;text-align:center;color:var(--ink-soft);font-size:13.5px;}
+
+  /* ---------------- PIN Gate ---------------- */
+  #pinGate{
+    position:fixed;inset:0;background:var(--bg);z-index:9999;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  #pinGate[hidden]{display:none;}
+  .pin-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:32px 28px;width:100%;max-width:340px;text-align:center;
+    box-shadow:0 4px 24px rgba(40,56,72,0.08);
+  }
+  .pin-card .brand{justify-content:center;margin-bottom:18px;}
+  .pin-card h2{
+    font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;
+    margin:0 0 6px;color:var(--ink);
+  }
+  .pin-card p{color:var(--ink-soft);font-size:13px;margin:0 0 20px;line-height:1.5;}
+  .pin-input{
+    width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);
+    font-family:'IBM Plex Mono',monospace;font-size:18px;letter-spacing:.3em;text-align:center;
+    background:var(--bg);color:var(--ink);margin-bottom:14px;
+  }
+  .pin-input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+  #pinSubmitBtn{
+    width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;
+    padding:12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;cursor:pointer;
+  }
+  #pinSubmitBtn:hover:not(:disabled){background:var(--accent-dark);}
+  #pinSubmitBtn:disabled{background:#C7CCD3;cursor:not-allowed;}
+  .pin-status{font-size:12.5px;color:var(--warn);margin-top:12px;min-height:16px;font-family:'IBM Plex Mono',monospace;}
+  #appRoot[hidden]{display:none;}
+</style>
+</head>
+<body>
+
+<div id="pinGate">
+  <div class="pin-card">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,4 90,26 50,48 10,26" fill="var(--accent)"/>
+        <polygon points="50,30 90,52 50,74 10,52" fill="var(--gold)"/>
+        <polygon points="50,56 90,78 50,100 10,78" fill="var(--red)"/>
+        <polygon points="50,30 70,41 50,52 30,41" fill="#FFFFFF" fill-opacity="0.55"/>
+      </svg>
+      <div class="brand-word">
+        <div class="b1">INTEGRA</div>
+        <div class="b2">Solusi Mandiri</div>
+      </div>
+    </div>
+    <h2>Masukkan PIN</h2>
+    <p>Halaman ini dibatasi untuk tim internal. Masukkan PIN akses untuk melanjutkan.</p>
+    <input type="password" id="pinInput" class="pin-input" inputmode="numeric" placeholder="••••" autocomplete="off" maxlength="20" />
+    <button id="pinSubmitBtn" type="button">Buka</button>
+    <div class="pin-status" id="pinStatus"></div>
+  </div>
+</div>
+
+<div id="appRoot" hidden>
+<div class="wrap">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="50,4 90,26 50,48 10,26" fill="var(--accent)"/>
+      <polygon points="50,30 90,52 50,74 10,52" fill="var(--gold)"/>
+      <polygon points="50,56 90,78 50,100 10,78" fill="var(--red)"/>
+      <polygon points="50,30 70,41 50,52 30,41" fill="#FFFFFF" fill-opacity="0.55"/>
+    </svg>
+    <div class="brand-word">
+      <div class="b1">INTEGRA</div>
+      <div class="b2">Solusi Mandiri</div>
+    </div>
+  </div>
+
+  <header class="top">
+    <div class="eyebrow"><span class="dot"></span>Site Mapping Tool</div>
+    <h1>Petakan teknisi ke site secara otomatis</h1>
+    <p class="sub">Upload data team dan data site, lalu sistem akan membagi site ke setiap teknisi secara bergilir (round robin) per Regional — hasilnya siap diunduh sebagai Excel.</p>
+  </header>
+
+  <div class="db-config">
+    <div class="db-config-head">Pengaturan Database (Google Sheets)</div>
+    <div class="db-config-row">
+      <input type="text" id="dbUrl" placeholder="Web App URL dari Apps Script (https://script.google.com/macros/s/.../exec)" />
+      <input type="password" id="dbToken" placeholder="Kode akses" />
+      <button id="dbTestBtn" type="button">Test Koneksi</button>
+    </div>
+    <div class="db-status" id="dbStatus">Belum disambungkan — isi URL &amp; kode akses, lalu klik Test Koneksi.</div>
+  </div>
+
+  <div class="tabnav">
+    <button class="tab-btn active" id="tabBtnMapping" type="button">Generate Mapping</button>
+    <button class="tab-btn" id="tabBtnDashboard" type="button">Dashboard <span class="tab-badge" id="dashCountBadge"></span></button>
+  </div>
+
+  <div id="panelMapping">
+  <div class="title-field">
+    <label for="projTitle">Judul Assignment (akan muncul di baris atas hasil &amp; file Excel)</label>
+    <input id="projTitle" type="text" value="Assignment Mitra Service Power Recbatt Lithium Program Support PI & MRO CP#2 2026 Sulawesi EPROC20260611002_ISM" />
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head">
+        <h2><span class="step-num">1</span>Data Site</h2>
+        <button class="template-btn" id="tplSiteBtn" type="button">Download Template</button>
+      </div>
+      <p class="hint">File berisi daftar site yang perlu di-assign (kolom Regional &amp; Site ID).</p>
+      <div class="dropzone" id="dzSite">
+        <input type="file" id="fileSite" accept=".xlsx,.xls,.csv" />
+        <div class="dz-label">Klik atau drop file di sini (.xlsx / .csv)</div>
+        <div class="dz-file" id="dzSiteFile"></div>
+      </div>
+      <div class="mapping" id="mapSite">
+        <div class="map-row"><label>Regional</label><select id="selSiteRegional"></select></div>
+        <div class="map-row"><label>Site ID</label><select id="selSiteId"></select></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2><span class="step-num">2</span>Data Team</h2>
+        <button class="template-btn" id="tplTeamBtn" type="button">Download Template</button>
+      </div>
+      <p class="hint">File berisi daftar teknisi (kolom Regional, Nama, Jabatan, NIK, No HP).</p>
+      <div class="dropzone" id="dzTeam">
+        <input type="file" id="fileTeam" accept=".xlsx,.xls,.csv" />
+        <div class="dz-label">Klik atau drop file di sini (.xlsx / .csv)</div>
+        <div class="dz-file" id="dzTeamFile"></div>
+      </div>
+      <div class="mapping" id="mapTeam">
+        <div class="map-row"><label>Regional</label><select id="selTeamRegional"></select></div>
+        <div class="map-row"><label>Nama</label><select id="selTeamNama"></select></div>
+        <div class="map-row"><label>Jabatan</label><select id="selTeamJabatan"></select></div>
+        <div class="map-row"><label>NIK</label><select id="selTeamNik"></select></div>
+        <div class="map-row"><label>No HP</label><select id="selTeamHp"></select></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="actions">
+    <button id="generateBtn" disabled>Generate Mapping</button>
+    <button id="downloadBtn" hidden>Download Excel</button>
+    <button id="saveDashBtn" hidden>Simpan ke Dashboard</button>
+    <span class="status" id="statusText"></span>
+  </div>
+  <p class="save-note" id="saveNote" hidden>Data yang disimpan ke Dashboard akan tersimpan dan bisa dilihat/dicari oleh siapa saja yang membuka tool ini.</p>
+
+  <div id="legendWrap"></div>
+
+  <div class="results-card" id="resultsCard" style="display:none;">
+    <div class="results-title" id="resultsTitle"></div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Regional</th><th>Site ID</th><th>Nama</th><th>Jabatan</th><th>NIK</th><th>No HP</th></tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="results-card" id="teamCard" style="display:none;margin-top:18px;">
+    <div class="results-title" id="teamCardTitle"></div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Regional</th><th>Nama</th><th>Jabatan</th><th>NIK KTP</th><th>No HP</th></tr>
+        </thead>
+        <tbody id="teamCardBody"></tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+
+  <div id="panelDashboard" style="display:none;">
+    <div class="dash-toolbar">
+      <input type="text" id="dashSearch" placeholder="Cari Site ID, Nama, Regional, NIK, No HP, atau judul batch..." />
+      <select id="dashBatchFilter"><option value="">Semua Batch</option></select>
+      <button id="dashRefreshBtn" type="button">Refresh</button>
+    </div>
+    <div class="dash-stats" id="dashStats"></div>
+    <div class="results-card" id="dashCard">
+      <div class="results-title">Hasil Site Mapping Tersimpan</div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Batch</th><th>Tanggal</th><th>Regional</th><th>Site ID</th><th>Nama</th><th>Jabatan</th><th>NIK</th><th>No HP</th></tr>
+          </thead>
+          <tbody id="dashBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /#appRoot -->
+
+<script>
+const PALETTE = ['#E8821A','#283848','#2E7D32','#6C3483','#1F618D','#C1272D','#117864','#A04000','#7D6608','#922B21'];
+
+let siteRows = null, siteHeaders = null;
+let teamRows = null, teamHeaders = null;
+let mappingResult = null;
+let teamSummary = null;
+
+function readFile(file, cb){
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result);
+    const wb = XLSX.read(data, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    // drop fully empty rows
+    const cleaned = rows.filter(r => r.some(c => String(c).trim() !== ''));
+    const headers = cleaned[0].map(h => String(h).trim());
+    const body = cleaned.slice(1);
+    cb(headers, body);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function bestMatch(headers, keywords){
+  for(const kw of keywords){
+    const idx = headers.findIndex(h => h.toLowerCase().replace(/[^a-z0-9]/g,'').includes(kw));
+    if(idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function fillSelect(sel, headers, preferIdx){
+  sel.innerHTML = headers.map((h,i) => `<option value="${i}">${h || '(kolom '+(i+1)+')'}</option>`).join('');
+  if(preferIdx >= 0) sel.value = preferIdx;
+}
+
+function setupDropzone(dzId, inputId, fileLabelId, onParsed){
+  const dz = document.getElementById(dzId);
+  const input = document.getElementById(inputId);
+  const label = document.getElementById(fileLabelId);
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if(!file) return;
+    dz.classList.add('has-file');
+    label.textContent = file.name;
+    readFile(file, onParsed);
+  });
+}
+
+setupDropzone('dzSite','fileSite','dzSiteFile', (headers, body) => {
+  siteHeaders = headers; siteRows = body;
+  fillSelect(document.getElementById('selSiteRegional'), headers, bestMatch(headers, ['regional']));
+  fillSelect(document.getElementById('selSiteId'), headers, bestMatch(headers, ['siteid','site']));
+  document.getElementById('mapSite').classList.add('show');
+  checkReady();
+});
+
+setupDropzone('dzTeam','fileTeam','dzTeamFile', (headers, body) => {
+  teamHeaders = headers; teamRows = body;
+  fillSelect(document.getElementById('selTeamRegional'), headers, bestMatch(headers, ['regional']));
+  fillSelect(document.getElementById('selTeamNama'), headers, bestMatch(headers, ['nama','name']));
+  fillSelect(document.getElementById('selTeamJabatan'), headers, bestMatch(headers, ['jabatan','posisi','position']));
+  fillSelect(document.getElementById('selTeamNik'), headers, bestMatch(headers, ['nik']));
+  fillSelect(document.getElementById('selTeamHp'), headers, bestMatch(headers, ['nohp','hp','telp','phone','telepon']));
+  document.getElementById('mapTeam').classList.add('show');
+  checkReady();
+});
+
+function checkReady(){
+  const ready = siteRows && teamRows && siteRows.length && teamRows.length;
+  document.getElementById('generateBtn').disabled = !ready;
+}
+
+function showError(msg){
+  const box = document.getElementById('errorBox');
+  if(!msg){ box.classList.remove('show'); box.textContent=''; return; }
+  box.textContent = msg;
+  box.classList.add('show');
+}
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+  showError('');
+  try{
+    const siteRegIdx = +document.getElementById('selSiteRegional').value;
+    const siteIdIdx = +document.getElementById('selSiteId').value;
+    const teamRegIdx = +document.getElementById('selTeamRegional').value;
+    const teamNamaIdx = +document.getElementById('selTeamNama').value;
+    const teamJabIdx = +document.getElementById('selTeamJabatan').value;
+    const teamNikIdx = +document.getElementById('selTeamNik').value;
+    const teamHpIdx = +document.getElementById('selTeamHp').value;
+
+    // group team members by regional, preserving original order
+    const teamByRegional = {};
+    teamRows.forEach(r => {
+      const reg = String(r[teamRegIdx] ?? '').trim();
+      if(!reg) return;
+      if(!teamByRegional[reg]) teamByRegional[reg] = [];
+      teamByRegional[reg].push({
+        nama: String(r[teamNamaIdx] ?? '').trim(),
+        jabatan: String(r[teamJabIdx] ?? '').trim(),
+        nik: String(r[teamNikIdx] ?? '').trim(),
+        hp: String(r[teamHpIdx] ?? '').trim()
+      });
+    });
+
+    if(Object.keys(teamByRegional).length === 0){
+      showError('Tidak ada data team yang valid — periksa kolom Regional pada data team.');
+      return;
+    }
+
+    const cursor = {}; // round robin cursor per regional
+    const result = [];
+    let unassignedCount = 0;
+
+    siteRows.forEach(r => {
+      const reg = String(r[siteRegIdx] ?? '').trim();
+      const siteId = String(r[siteIdIdx] ?? '').trim();
+      if(!siteId) return;
+      const members = teamByRegional[reg];
+      if(!members || members.length === 0){
+        result.push({regional: reg, siteId, nama:'', jabatan:'', nik:'', hp:'', unassigned:true});
+        unassignedCount++;
+        return;
+      }
+      if(cursor[reg] === undefined) cursor[reg] = 0;
+      const member = members[cursor[reg] % members.length];
+      cursor[reg]++;
+      result.push({regional: reg, siteId, nama: member.nama, jabatan: member.jabatan, nik: member.nik, hp: member.hp, unassigned:false});
+    });
+
+    mappingResult = result;
+    teamSummary = buildTeamSummary(result);
+    renderResults(result, unassignedCount);
+    renderTeamSummary(teamSummary);
+  }catch(err){
+    showError('Terjadi kesalahan saat memproses data: ' + err.message);
+  }
+});
+
+function buildTeamSummary(result){
+  const seen = new Set();
+  const counts = {};
+  const list = [];
+  result.forEach(r => {
+    if(r.unassigned || !r.nama) return;
+    const key = r.nama + '|' + r.nik;
+    counts[key] = (counts[key]||0) + 1;
+    if(!seen.has(key)){
+      seen.add(key);
+      list.push({regional: r.regional, nama: r.nama, jabatan: r.jabatan, nik: r.nik, hp: r.hp, key});
+    }
+  });
+  return list.map(r => ({...r, siteCount: counts[r.key]}));
+}
+
+function renderTeamSummary(teamSummary){
+  const card = document.getElementById('teamCard');
+  const body = document.getElementById('teamCardBody');
+  if(!teamSummary || teamSummary.length === 0){
+    card.style.display = 'none';
+    return;
+  }
+  document.getElementById('teamCardTitle').textContent = document.getElementById('projTitle').value + ' — Team Mapping Result';
+  body.innerHTML = teamSummary.map(r =>
+    `<tr>
+      <td class="cell-regional">${r.regional}</td>
+      <td>${r.nama}</td>
+      <td>${r.jabatan}</td>
+      <td class="cell-nik">${r.nik}</td>
+      <td class="cell-hp">${r.hp}</td>
+    </tr>`
+  ).join('');
+  card.style.display = 'block';
+}
+function renderResults(result, unassignedCount){
+  const card = document.getElementById('resultsCard');
+  const body = document.getElementById('resultsBody');
+  const legendWrap = document.getElementById('legendWrap');
+  const statusText = document.getElementById('statusText');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  if(result.length === 0){
+    card.style.display = 'none';
+    document.getElementById('teamCard').style.display = 'none';
+    legendWrap.innerHTML = '';
+    statusText.textContent = 'Tidak ada baris site yang bisa diproses — periksa kolom Site ID.';
+    downloadBtn.hidden = true;
+    document.getElementById('saveDashBtn').hidden = true;
+    document.getElementById('saveNote').hidden = true;
+    return;
+  }
+
+  // assign consistent colors per technician name
+  const colorMap = {};
+  let ci = 0;
+  result.forEach(r => {
+    if(r.nama && !(r.nama in colorMap)){
+      colorMap[r.nama] = PALETTE[ci % PALETTE.length];
+      ci++;
+    }
+  });
+
+  // legend with counts
+  const counts = {};
+  result.forEach(r => { if(r.nama) counts[r.nama] = (counts[r.nama]||0)+1; });
+  legendWrap.innerHTML = '<div class="legend">' + Object.keys(colorMap).map(nama =>
+    `<div class="legend-item"><span class="legend-swatch" style="background:${colorMap[nama]}"></span>${nama}<span class="legend-count">${counts[nama]} site</span></div>`
+  ).join('') + '</div>';
+
+  body.innerHTML = result.map(r => {
+    if(r.unassigned){
+      return `<tr><td class="cell-regional">${r.regional}</td><td class="cell-site">${r.siteId}</td><td colspan="4" class="unassigned">Belum ada teknisi untuk Regional ini</td></tr>`;
+    }
+    const color = colorMap[r.nama] || '#999';
+    return `<tr>
+      <td class="cell-regional">${r.regional}</td>
+      <td class="cell-site">${r.siteId}</td>
+      <td class="cell-nama"><span class="nama-dot" style="background:${color}"></span>${r.nama}</td>
+      <td>${r.jabatan}</td>
+      <td class="cell-nik">${r.nik}</td>
+      <td class="cell-hp">${r.hp}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('resultsTitle').textContent = document.getElementById('projTitle').value;
+  card.style.display = 'block';
+  downloadBtn.hidden = false;
+  document.getElementById('saveDashBtn').hidden = false;
+  document.getElementById('saveNote').hidden = false;
+  statusText.textContent = `${result.length} site dipetakan` + (unassignedCount ? ` · ${unassignedCount} site belum ada teknisi` : '');
+}
+
+document.getElementById('tplSiteBtn').addEventListener('click', () => {
+  const aoa = [
+    ['REGIONAL','SITE ID'],
+    ['R09 Sulawesi','NTI366'],
+    ['R09 Sulawesi','BAU234'],
+    ['R09 Sulawesi','ADL078']
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:16},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Data Site');
+  XLSX.writeFile(wb, 'Template_Data_Site.xlsx');
+});
+
+document.getElementById('tplTeamBtn').addEventListener('click', () => {
+  const aoa = [
+    ['REGIONAL','NAMA','JABATAN','NIK','NO HP'],
+    ['R09 Sulawesi','Bhonta Ardha Sepgeana','Technician Recbatt','3328030509990000','89516446931'],
+    ['R09 Sulawesi','Dulfi','Technician Recbatt','6371030811940000','895355400243'],
+    ['R09 Sulawesi','Rahman Fauzi','Technician Recbatt','6371030204880000','81250168700']
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:16},{wch:24},{wch:18},{wch:18},{wch:16}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Data Team');
+  XLSX.writeFile(wb, 'Template_Data_Team.xlsx');
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if(!mappingResult) return;
+  const title = document.getElementById('projTitle').value;
+  const header = ['REGIONAL','SITE ID','NAMA','JABATAN','NIK','NO HP'];
+  const dataRows = mappingResult.map(r => [r.regional, r.siteId, r.unassigned ? '' : r.nama, r.unassigned ? '' : r.jabatan, r.unassigned ? '' : r.nik, r.unassigned ? '' : r.hp]);
+  const aoa = [[title], [], header, ...dataRows];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:5}}];
+  ws['!cols'] = [{wch:14},{wch:12},{wch:24},{wch:18},{wch:16},{wch:16}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Site Mapping');
+
+  if(teamSummary && teamSummary.length){
+    const teamHeader = ['REGIONAL','NAMA','JABATAN','NIK KTP','NO HP'];
+    const teamRowsOut = teamSummary.map(r => [r.regional, r.nama, r.jabatan, r.nik, r.hp]);
+    const teamAoa = [[title], [], teamHeader, ...teamRowsOut];
+    const wsTeam = XLSX.utils.aoa_to_sheet(teamAoa);
+    wsTeam['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:4}}];
+    wsTeam['!cols'] = [{wch:14},{wch:24},{wch:18},{wch:18},{wch:16}];
+    XLSX.utils.book_append_sheet(wb, wsTeam, 'Team Mapping');
+  }
+
+  XLSX.writeFile(wb, 'Site_Mapping_Result.xlsx');
+});
+
+/* ---------------- Tabs ---------------- */
+const tabBtnMapping = document.getElementById('tabBtnMapping');
+const tabBtnDashboard = document.getElementById('tabBtnDashboard');
+const panelMapping = document.getElementById('panelMapping');
+const panelDashboard = document.getElementById('panelDashboard');
+
+tabBtnMapping.addEventListener('click', () => switchTab('mapping'));
+tabBtnDashboard.addEventListener('click', () => switchTab('dashboard'));
+
+function switchTab(which){
+  const isMapping = which === 'mapping';
+  panelMapping.style.display = isMapping ? '' : 'none';
+  panelDashboard.style.display = isMapping ? 'none' : '';
+  tabBtnMapping.classList.toggle('active', isMapping);
+  tabBtnDashboard.classList.toggle('active', !isMapping);
+  if(!isMapping) loadDashboard();
+}
+
+/* ---------------- Database config (Google Sheets via Apps Script) ---------------- */
+function getDbUrl(){ return document.getElementById('dbUrl').value.trim(); }
+function getDbToken(){ return document.getElementById('dbToken').value.trim(); }
+function configReady(){ return !!getDbUrl() && !!getDbToken(); }
+function configMissingMessage(){
+  return 'Database belum disambungkan. Isi dulu URL Web App Apps Script dan kode akses di bagian "Pengaturan Database" di atas.';
+}
+
+async function apiSave(payload){
+  const resp = await fetch(getDbUrl(), {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({token: getDbToken()}, payload))
+  });
+  const data = await resp.json();
+  if(data.error) throw new Error(data.error);
+  return data;
+}
+
+async function apiLoad(){
+  const resp = await fetch(getDbUrl() + '?token=' + encodeURIComponent(getDbToken()));
+  const data = await resp.json();
+  if(data.error) throw new Error(data.error);
+  return data;
+}
+
+document.getElementById('dbTestBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('dbStatus');
+  if(!configReady()){ statusEl.textContent = 'Isi URL dan kode akses dulu.'; statusEl.className='db-status err'; return; }
+  statusEl.textContent = 'Menghubungkan...'; statusEl.className = 'db-status';
+  try{
+    const data = await apiLoad();
+    statusEl.textContent = `Terhubung — ${data.batchIndex.length} batch tersimpan.`;
+    statusEl.className = 'db-status ok';
+  }catch(err){
+    statusEl.textContent = 'Gagal terhubung: ' + err.message;
+    statusEl.className = 'db-status err';
+  }
+});
+
+/* ---------------- Save to Dashboard ---------------- */
+document.getElementById('saveDashBtn').addEventListener('click', async () => {
+  if(!mappingResult || !mappingResult.length) return;
+  if(!configReady()){
+    showError(configMissingMessage());
+    return;
+  }
+  const btn = document.getElementById('saveDashBtn');
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Menyimpan...';
+  btn.disabled = true;
+  try{
+    const title = document.getElementById('projTitle').value || 'Tanpa judul';
+    const batchId = 'batch_' + Date.now();
+    const createdAt = new Date().toISOString();
+
+    const siteRowsPayload = mappingResult.map(r => ({
+      batchId, batchTitle: title, createdAt,
+      regional: r.regional, siteId: r.siteId,
+      nama: r.unassigned ? '' : r.nama, jabatan: r.unassigned ? '' : r.jabatan,
+      nik: r.unassigned ? '' : r.nik, hp: r.unassigned ? '' : r.hp,
+      unassigned: !!r.unassigned
+    }));
+
+    const teamRowsPayload = (teamSummary || []).map(r => ({
+      batchId, batchTitle: title, createdAt,
+      regional: r.regional, nama: r.nama, jabatan: r.jabatan, nik: r.nik, hp: r.hp
+    }));
+
+    await apiSave({
+      siteRows: siteRowsPayload,
+      teamRows: teamRowsPayload,
+      batchMeta: { batchId, title, createdAt, siteCount: mappingResult.length }
+    });
+
+    btn.textContent = 'Tersimpan ✓';
+    setTimeout(() => { btn.textContent = originalLabel; btn.disabled = false; }, 1800);
+    updateDashboardBadge();
+  }catch(err){
+    console.error('Save error:', err);
+    btn.textContent = originalLabel;
+    btn.disabled = false;
+    showError('Gagal menyimpan ke Dashboard: ' + err.message);
+  }
+});
+
+/* ---------------- Dashboard ---------------- */
+let dashAllSiteRows = [];
+
+async function updateDashboardBadge(){
+  if(!configReady()) return;
+  try{
+    const data = await apiLoad();
+    document.getElementById('dashCountBadge').textContent = data.siteRows.length;
+  }catch(e){
+    document.getElementById('dashCountBadge').textContent = '';
+  }
+}
+
+async function loadDashboard(){
+  const body = document.getElementById('dashBody');
+  if(!configReady()){
+    body.innerHTML = `<tr><td colspan="8" class="empty-state">${configMissingMessage()}</td></tr>`;
+    document.getElementById('dashStats').innerHTML = '';
+    return;
+  }
+  body.innerHTML = '<tr><td colspan="8" class="empty-state">Memuat data...</td></tr>';
+  let batchIndex = [];
+  try{
+    const data = await apiLoad();
+    dashAllSiteRows = data.siteRows || [];
+    batchIndex = data.batchIndex || [];
+  }catch(e){
+    dashAllSiteRows = [];
+    body.innerHTML = `<tr><td colspan="8" class="empty-state">Gagal memuat data: ${e.message}</td></tr>`;
+    document.getElementById('dashStats').innerHTML = '';
+    return;
+  }
+
+  const sel = document.getElementById('dashBatchFilter');
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">Semua Batch</option>' + batchIndex.slice().reverse().map(b =>
+    `<option value="${b.batchId}">${b.title} — ${new Date(b.createdAt).toLocaleDateString('id-ID')}</option>`
+  ).join('');
+  sel.value = currentVal;
+
+  // stats
+  const totalSites = dashAllSiteRows.length;
+  const totalBatches = batchIndex.length;
+  const totalTechs = new Set(dashAllSiteRows.filter(r => r.nama).map(r => r.nama + '|' + r.nik)).size;
+  document.getElementById('dashStats').innerHTML = `
+    <div class="dash-stat"><div class="num">${totalSites}</div><div class="lbl">Total Site Tersimpan</div></div>
+    <div class="dash-stat"><div class="num">${totalBatches}</div><div class="lbl">Total Batch</div></div>
+    <div class="dash-stat"><div class="num">${totalTechs}</div><div class="lbl">Teknisi Terlibat</div></div>
+  `;
+
+  document.getElementById('dashCountBadge').textContent = totalSites || '';
+  renderDashboardTable();
+}
+
+function renderDashboardTable(){
+  const body = document.getElementById('dashBody');
+  const q = document.getElementById('dashSearch').value.trim().toLowerCase();
+  const batchFilter = document.getElementById('dashBatchFilter').value;
+
+  let rows = dashAllSiteRows;
+  if(batchFilter) rows = rows.filter(r => r.batchId === batchFilter);
+  if(q){
+    rows = rows.filter(r =>
+      (r.siteId||'').toLowerCase().includes(q) ||
+      (r.nama||'').toLowerCase().includes(q) ||
+      (r.regional||'').toLowerCase().includes(q) ||
+      (r.nik||'').toLowerCase().includes(q) ||
+      (r.hp||'').toLowerCase().includes(q) ||
+      (r.jabatan||'').toLowerCase().includes(q) ||
+      (r.batchTitle||'').toLowerCase().includes(q)
+    );
+  }
+
+  if(rows.length === 0){
+    body.innerHTML = '<tr><td colspan="8" class="empty-state">Belum ada data tersimpan, atau tidak ada hasil yang cocok dengan pencarian.</td></tr>';
+    return;
+  }
+
+  // show newest first
+  rows = rows.slice().reverse();
+
+  body.innerHTML = rows.map(r => `
+    <tr>
+      <td class="cell-regional" title="${r.batchTitle}">${(r.batchTitle||'').slice(0,28)}${(r.batchTitle||'').length>28?'…':''}</td>
+      <td class="cell-regional">${new Date(r.createdAt).toLocaleDateString('id-ID')}</td>
+      <td class="cell-regional">${r.regional}</td>
+      <td class="cell-site">${r.siteId}</td>
+      <td>${r.unassigned ? '<span class="unassigned">Belum ada teknisi</span>' : r.nama}</td>
+      <td>${r.jabatan}</td>
+      <td class="cell-nik">${r.nik}</td>
+      <td class="cell-hp">${r.hp}</td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('dashSearch').addEventListener('input', renderDashboardTable);
+document.getElementById('dashBatchFilter').addEventListener('change', renderDashboardTable);
+document.getElementById('dashRefreshBtn').addEventListener('click', loadDashboard);
+document.getElementById('dbUrl').addEventListener('change', updateDashboardBadge);
+document.getElementById('dbToken').addEventListener('change', updateDashboardBadge);
+
+/* ---------------- PIN Gate ---------------- */
+// PIN dicek langsung di sini (sisi browser). Ini BUKAN rahasia kriptografis —
+// siapa pun yang membuka "View Source" halaman bisa melihat PIN ini. Fungsinya
+// sekadar gerbang sederhana supaya tidak sembarang orang yang kebetulan
+// menemukan link langsung bisa membuka tool. Ganti nilai di bawah sesuka hati.
+const SITE_PIN = '123456';
+const PIN_GATE_STORAGE_KEY = 'siteMappingPinOk';
+
+function unlockApp(){
+  document.getElementById('pinGate').setAttribute('hidden', '');
+  document.getElementById('appRoot').removeAttribute('hidden');
+}
+
+function showPinError(msg){
+  const statusEl = document.getElementById('pinStatus');
+  statusEl.textContent = msg;
+}
+
+function submitPin(){
+  const input = document.getElementById('pinInput');
+  const pin = input.value.trim();
+  if(!pin){ showPinError('Masukkan PIN terlebih dahulu.'); return; }
+
+  if(pin === SITE_PIN){
+    try{ localStorage.setItem(PIN_GATE_STORAGE_KEY, '1'); }catch(e){ /* localStorage tidak tersedia, lanjut tanpa diingat */ }
+    showPinError('');
+    unlockApp();
+  }else{
+    showPinError('PIN salah. Coba lagi.');
+    input.value = '';
+    input.focus();
+  }
+}
+
+document.getElementById('pinSubmitBtn').addEventListener('click', submitPin);
+document.getElementById('pinInput').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') submitPin();
+});
+
+(function initPinGate(){
+  let alreadyUnlocked = false;
+  try{ alreadyUnlocked = localStorage.getItem(PIN_GATE_STORAGE_KEY) === '1'; }catch(e){ /* abaikan */ }
+  if(alreadyUnlocked){
+    unlockApp();
+  }else{
+    document.getElementById('pinInput').focus();
+  }
+})();
+</script>
+</body>
+</html>
